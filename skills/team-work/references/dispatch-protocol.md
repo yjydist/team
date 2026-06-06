@@ -29,6 +29,11 @@ Use this protocol when coordinating multiple specialists or parallel agents. Sca
 - Frontend starting before endpoint names, payloads, or auth behavior are known.
 - Backend and database making incompatible schema or transaction decisions.
 - DevOps changing deployment assumptions while architecture is undecided.
+- Mobile and backend making incompatible sync, conflict, or offline decisions.
+- Security or QA reviewing before any implementation, design, or diff artifact exists.
+- Product and architecture running in parallel before scope is stable.
+- Multiple specialists editing overlapping API contracts, schemas, or auth policies.
+- Adding output-aggregator when only one specialist produced output.
 - Aggregation before all required outputs are available.
 
 ## Failure and Conflict Handling

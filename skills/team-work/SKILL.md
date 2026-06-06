@@ -9,13 +9,13 @@ Coordinate specialist software engineering work without over-dispatching. Optimi
 
 ## Core Workflow
 
-1. Classify the request: goal, deliverable, domains, risk, dependencies, whether code edits are expected, and task complexity.
-2. Match process depth to complexity. Simple tasks stay direct; complex tasks get phased coordination.
-3. Read [routing-matrix.md](references/routing-matrix.md) when role selection is unclear.
-4. Build dependency batches before dispatching work. Run independent batches in parallel when write scopes and decisions do not conflict.
-5. Use [dispatch-protocol.md](references/dispatch-protocol.md) for parallelization, ownership, failure handling, and merge rules.
-6. Use [handoff-contracts.md](references/handoff-contracts.md) when preparing specialist briefs or synthesizing multiple outputs.
-7. Return one unified answer. Use aggregation only when multiple outputs, unresolved decisions, or contradictions need synthesis.
+1. **Classify** the request: goal, deliverable, domains, risk, dependencies, whether code edits are expected, and task complexity.
+2. **Match process depth to complexity**. Simple tasks stay direct; complex tasks get phased coordination. If a process feels larger than the request, downshift complexity before adding agents.
+3. **Read [routing-matrix.md](references/routing-matrix.md)** when role selection is unclear.
+4. **Build dependency batches** before dispatching work. Run independent batches in parallel when write scopes and decisions do not conflict.
+5. **Use [dispatch-protocol.md](references/dispatch-protocol.md)** for parallelization, ownership, failure handling, and merge rules.
+6. **Use [handoff-contracts.md](references/handoff-contracts.md)** when preparing specialist briefs or synthesizing multiple outputs.
+7. **Return one unified answer**. Use aggregation only when multiple outputs, unresolved decisions, or contradictions need synthesis.
 
 ## Complexity Levels
 
@@ -23,36 +23,30 @@ Coordinate specialist software engineering work without over-dispatching. Optimi
 - **Medium**: one feature slice or 2-3 domains with clear scope, such as API plus UI, schema plus migration, or CI plus test gates. Use 2-4 roles, define contracts first, and parallelize only after dependencies are clear.
 - **Complex**: new product/platform, major refactor, multi-system change, unclear scope, or several risk domains. Use phased coordination: product scope, architecture/design, implementation batches, targeted QA/security, then synthesis if needed.
 
+### Common Compositions
+
+| Task | Team |
+| --- | --- |
+| Login or account feature | backend-developer + frontend-developer; add security-engineer for auth review |
+| Data-heavy feature | database-engineer for schema/query contract, backend-developer for API, frontend-developer for UI |
+| Small full-stack CRUD | fullstack-developer alone unless separate ownership or risk justifies specialists |
+| Platform build | product-manager, system-architect, then implementation specialists by ownership, then targeted QA/security |
+| CI or deployment | devops-engineer, plus qa-engineer only if quality gates are part of the request |
+
 ## Dispatch Heuristics
 
 - **Do not dispatch** for a single bug explanation, one SQL query, one component, one file edit, or ordinary Q&A unless the user explicitly asks for team mode.
 - **Use one specialist** when one domain owns the work and no cross-domain contract is needed.
 - **Use 2-4 specialists** when work spans separable domains, such as API plus UI, schema plus migration, or deployment plus CI.
-- **Use product-manager** only for ambiguous product scope, MVP trade-offs, prioritization, or acceptance criteria.
-- **Use system-architect** for new platforms, major refactors, distributed systems, cross-service boundaries, or important technology choices.
-- **Use qa-engineer** when testing strategy, coverage, E2E, CI quality gates, or release confidence is the main risk.
-- **Use security-engineer** for auth, authorization, secrets, payment, public APIs, data deletion, encryption, compliance, or security findings.
-- **Use output-aggregator** for multi-agent synthesis or conflict resolution, not as a mandatory final step for every simple task.
 
-## Parallelism Rules
+See [routing-matrix.md](references/routing-matrix.md) for per-role triggers, avoidance guidance, and the full role catalog.
 
-Parallelize only when all of these are true:
+## Parallelism and Handoffs
 
-- Each agent has a distinct output or file/module ownership area.
-- No agent needs another agent's unfinished decision to start.
-- Shared contracts are already defined or the parallel task is explicitly exploratory.
-- The expected integration path is clear.
+See [dispatch-protocol.md](references/dispatch-protocol.md) for safe/unsafe parallel patterns, batch building, and conflict handling.
 
-Do not parallelize competing edits to the same files, overlapping API/schema decisions, or work that depends on unresolved architecture.
+See [handoff-contracts.md](references/handoff-contracts.md) for specialist brief and aggregation templates.
 
-## Codex Compatibility
+## Compatibility
 
-This skill is the Codex-first entry point. The repository also contains `agents/*.md`, `.claude-plugin/plugin.json`, and `qwen-extension.json` for compatibility with other agent ecosystems. Treat those files as role references unless the active runtime exposes matching agent tools.
-
-## Maintaining Routing Quality
-
-When changing routing, complexity, or dispatch behavior, update [routing-evals.json](references/routing-evals.json), follow [eval-guide.md](references/eval-guide.md) for manual forward-testing, and run:
-
-```bash
-python3 skills/team-work/scripts/check-routing-evals.py skills/team-work/references/routing-evals.json
-```
+This skill targets Codex; other agent ecosystems may use the files in `agents/` and `.claude-plugin/` as role references.

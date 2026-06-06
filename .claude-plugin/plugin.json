@@ -1,5 +1,31 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "team",
-  "description": "yjydist's agent team"
+  "name": "agent-team",
+  "version": "1.0.0",
+  "description": "Coordinated software engineering team workflow for Claude Code.",
+  "author": {
+    "name": "yjydist"
+  },
+  "license": "MIT",
+  "keywords": [
+    "agents",
+    "software-development",
+    "coordination",
+    "planning",
+    "code-review"
+  ],
+  "interface": {
+    "displayName": "Agent Team",
+    "shortDescription": "Coordinate specialist software engineering agents.",
+    "capabilities": [
+      "Planning",
+      "Write",
+      "Review"
+    ],
+    "defaultPrompt": [
+      "Use the agent team to coordinate specialists for this feature.",
+      "Use the agent team to plan a parallel implementation workflow.",
+      "Use the agent team to review this multi-domain change."
+    ]
+  }
 }

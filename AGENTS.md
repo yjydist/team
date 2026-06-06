@@ -4,35 +4,58 @@
 
 This repository is a compatible agent-team plugin with a Codex-first skill. `.codex-plugin/plugin.json` is the Codex manifest. `.claude-plugin/plugin.json` and `qwen-extension.json` are compatibility manifests. The active Codex skill lives in `skills/team-work/`; its `SKILL.md` stays concise while `references/` holds routing, dispatch, and handoff details. Legacy specialist profiles live in `agents/` and should remain valid Markdown with YAML front matter.
 
+### Reference Files
+
+| File | Purpose |
+| --- | --- |
+| `skills/team-work/references/routing-matrix.md` | Per-role triggers and team composition guidance |
+| `skills/team-work/references/dispatch-protocol.md` | Parallelization, ownership, failure handling, merge rules |
+| `skills/team-work/references/handoff-contracts.md` | Specialist brief and aggregation templates |
+| `skills/team-work/references/routing-evals.json` | Routing behavior corpus with required/forbidden roles |
+| `skills/team-work/references/eval-guide.md` | How to validate routing changes |
+
+## Getting Started
+
+### Use in Codex
+
+Place or symlink this repository where Codex can discover it, then invoke:
+
+```text
+Use $team-work to coordinate specialists for this feature.
+```
+
+### Use in Claude Code
+
+Load the directory manually:
+
+```bash
+claude --plugin-dir /path/to/claude-agent-team
+```
+
+### Skill vs Agent Profiles
+
+- `skills/team-work/` is the active Codex skill entry point.
+- `agents/*.md` are legacy specialist profiles for Claude Code compatibility and routing reference material.
+
 ## Build, Test, and Development Commands
 
 There is no compile step. Use these checks:
 
 ```bash
-python3 /Users/yjydist/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py .
-```
+# Validate the Codex plugin manifest and skill metadata
+python3 /path/to/codex/skill-creator/scripts/validate_plugin.py .
 
-Validates the Codex plugin manifest and skill metadata.
+# Validate the team-work skill front matter
+python3 /path/to/codex/skill-creator/scripts/quick_validate.py skills/team-work
 
-```bash
-python3 /Users/yjydist/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/team-work
-```
-
-Validates the `team-work` skill front matter.
-
-```bash
+# Validate routing scenarios and role constraints
 python3 skills/team-work/scripts/check-routing-evals.py skills/team-work/references/routing-evals.json
-```
 
-Validates complexity-aware routing scenarios and role constraints.
-
-```bash
+# Check whitespace and patch formatting
 git diff --check
 ```
 
-Checks whitespace and patch formatting.
-
-For Claude compatibility, manually run `claude --plugin-dir /path/to/claude-agent-team`.
+When changing routing, complexity, or dispatch behavior, update `routing-evals.json` and run the validator above.
 
 ## Coding Style & Naming Conventions
 
@@ -44,7 +67,7 @@ Test prompt behavior manually after routing changes. Cover at least one simple d
 
 ## Commit & Pull Request Guidelines
 
-The historical commits are terse `update` entries, but new commits should use descriptive imperative subjects such as `Add Codex plugin manifest` or `Refine team dispatch protocol`. Pull requests should list changed manifests, skills, and references; describe manual validation; and call out any compatibility impact for Claude or Qwen users.
+Use descriptive imperative subjects such as `Add Codex plugin manifest` or `Refine team dispatch protocol`. Pull requests should list changed manifests, skills, and references; describe manual validation; and call out any compatibility impact for Claude or Qwen users.
 
 ## Security & Configuration Tips
 

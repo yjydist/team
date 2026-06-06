@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -79,6 +80,10 @@ def validate_file(path: Path) -> list[str]:
                 errors.append(f"duplicate role: {role}")
             known_roles.add(role)
 
+    version = payload.get("version")
+    if not isinstance(version, int):
+        errors.append("root.version must be an integer")
+
     scenarios = payload.get("scenarios")
     if not isinstance(scenarios, list) or not scenarios:
         errors.append("root.scenarios must be a non-empty list")
@@ -97,6 +102,12 @@ def validate_file(path: Path) -> list[str]:
             errors.append(f"{label} must be an object")
             continue
 
+        unknown_fields = set(scenario) - REQUIRED_FIELDS
+        if unknown_fields:
+            errors.append(
+                f"{label} has unknown fields: {', '.join(sorted(unknown_fields))}"
+            )
+
         missing = REQUIRED_FIELDS - set(scenario)
         if missing:
             errors.append(f"{label} missing fields: {', '.join(sorted(missing))}")
@@ -111,6 +122,9 @@ def validate_file(path: Path) -> list[str]:
         else:
             seen_ids.add(scenario_id)
 
+        if not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", scenario_id):
+            errors.append(f"{scenario_id}.id must be kebab-case (alphanumeric and hyphens only)")
+
         complexity = scenario.get("complexity")
         if complexity not in COMPLEXITIES:
             errors.append(f"{scenario_id}.complexity must be one of {sorted(COMPLEXITIES)}")
@@ -122,6 +136,10 @@ def validate_file(path: Path) -> list[str]:
             errors.append(f"{scenario_id}.category must be a non-empty string")
         else:
             categories.add(category)
+            if category not in REQUIRED_CATEGORIES:
+                errors.append(
+                    f"{scenario_id}.category '{category}' is not a known category"
+                )
 
         for field in ("prompt", "expected_process"):
             value = scenario.get(field)
@@ -166,6 +184,16 @@ def validate_file(path: Path) -> list[str]:
     if not has_aggregation_constraint:
         errors.append("missing aggregation constraint coverage")
 
+    errors.extend(validate_role_coverage(scenarios, known_roles))
+    errors.extend(validate_prompt_uniqueness(scenarios))
+    errors.extend(validate_expected_process_consistency(scenarios))
+    errors.extend(validate_category_complexity_alignment(scenarios))
+    errors.extend(validate_scenario_count(scenarios))
+    errors.extend(validate_simple_overdispatch(scenarios))
+    errors.extend(validate_simple_optional_empty(scenarios))
+    errors.extend(validate_complex_aggregator(scenarios))
+    errors.extend(validate_dependency_note_role_presence(scenarios))
+
     return errors
 
 
@@ -206,7 +234,7 @@ def validate_dependency_notes(
         if not isinstance(note, str) or not note.strip():
             errors.append(f"{scenario_id}.dependency_notes[{index}] must be a non-empty string")
             continue
-        for token in note.replace(",", " ").replace(".", " ").split():
+        for token in re.findall(r"[a-zA-Z0-9_-]+", note):
             if token.endswith("-developer") or token.endswith("-engineer") or token in {
                 "product-manager",
                 "system-architect",
@@ -239,6 +267,172 @@ def validate_complexity_shape(
     elif complexity == "complex":
         if required_count < 5:
             errors.append(f"{scenario_id} complex scenarios should require at least five roles")
+
+
+def validate_role_coverage(
+    scenarios: list[dict[str, Any]],
+    known_roles: set[str],
+) -> list[str]:
+    errors: list[str] = []
+    referenced: set[str] = set()
+    for scenario in scenarios:
+        for field in ROLE_FIELDS:
+            referenced.update(scenario.get(field, []))
+    missing = known_roles - referenced
+    if missing:
+        errors.append(
+            f"roles never used in any scenario: {', '.join(sorted(missing))}"
+        )
+    return errors
+
+
+def validate_prompt_uniqueness(scenarios: list[dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    seen: dict[str, str] = {}
+    for scenario in scenarios:
+        prompt = scenario.get("prompt", "").strip().lower()
+        sid = scenario.get("id", "unknown")
+        if prompt in seen:
+            errors.append(
+                f"{sid} prompt is duplicate of {seen[prompt]}"
+            )
+        else:
+            seen[prompt] = sid
+    return errors
+
+
+def validate_expected_process_consistency(
+    scenarios: list[dict[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    for scenario in scenarios:
+        complexity = scenario.get("complexity")
+        expected = scenario.get("expected_process", "").lower()
+        sid = scenario.get("id", "unknown")
+        if complexity == "simple" and ("phased" in expected or "multi-phase" in expected):
+            errors.append(
+                f"{sid} simple scenario expected_process mentions phased/multi-phase workflow"
+            )
+        if complexity == "complex" and "direct" in expected and "specialist" in expected:
+            errors.append(
+                f"{sid} complex scenario expected_process describes a direct/single-specialist path"
+            )
+    return errors
+
+
+def validate_category_complexity_alignment(
+    scenarios: list[dict[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    for scenario in scenarios:
+        category = scenario.get("category")
+        complexity = scenario.get("complexity")
+        sid = scenario.get("id", "unknown")
+        if category == "direct_specialist" and complexity != "simple":
+            errors.append(
+                f"{sid} direct_specialist category should be simple, got {complexity}"
+            )
+        if category == "platform_build" and complexity != "complex":
+            errors.append(
+                f"{sid} platform_build category should be complex, got {complexity}"
+            )
+    return errors
+
+
+def validate_scenario_count(scenarios: list[dict[str, Any]]) -> list[str]:
+    errors: list[str] = []
+    counts: dict[str, int] = {}
+    for scenario in scenarios:
+        complexity = scenario.get("complexity")
+        if complexity in COMPLEXITIES:
+            counts[complexity] = counts.get(complexity, 0) + 1
+    for complexity in COMPLEXITIES:
+        if counts.get(complexity, 0) < 3:
+            errors.append(
+                f"only {counts.get(complexity, 0)} {complexity} scenarios (minimum 3 recommended)"
+            )
+    return errors
+
+
+def validate_simple_overdispatch(
+    scenarios: list[dict[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    for scenario in scenarios:
+        if scenario.get("complexity") != "simple":
+            continue
+        sid = scenario.get("id", "unknown")
+        required = set(scenario.get("required_roles", []))
+        forbidden = set(scenario.get("forbidden_roles", []))
+        for role in ("product-manager", "system-architect", "output-aggregator"):
+            if role not in required and role not in forbidden:
+                errors.append(
+                    f"{sid} simple scenario should forbid {role} to prevent over-dispatch"
+                )
+    return errors
+
+
+def validate_simple_optional_empty(
+    scenarios: list[dict[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    for scenario in scenarios:
+        if scenario.get("complexity") != "simple":
+            continue
+        sid = scenario.get("id", "unknown")
+        optional = scenario.get("optional_roles", [])
+        if optional:
+            errors.append(
+                f"{sid} simple scenario should have empty optional_roles, got {optional}"
+            )
+    return errors
+
+
+def validate_complex_aggregator(
+    scenarios: list[dict[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    for scenario in scenarios:
+        if scenario.get("complexity") != "complex":
+            continue
+        sid = scenario.get("id", "unknown")
+        required = set(scenario.get("required_roles", []))
+        optional = set(scenario.get("optional_roles", []))
+        if "output-aggregator" not in required and "output-aggregator" not in optional:
+            errors.append(
+                f"{sid} complex scenario should include output-aggregator in required or optional roles"
+            )
+    return errors
+
+
+def validate_dependency_note_role_presence(
+    scenarios: list[dict[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    for scenario in scenarios:
+        sid = scenario.get("id", "unknown")
+        scenario_roles = set()
+        for field in ROLE_FIELDS:
+            scenario_roles.update(scenario.get(field, []))
+        for index, note in enumerate(scenario.get("dependency_notes", [])):
+            for token in re.findall(r"[a-zA-Z0-9_-]+", note):
+                if (
+                    token.endswith("-developer")
+                    or token.endswith("-engineer")
+                    or token
+                    in {
+                        "product-manager",
+                        "system-architect",
+                        "ui-ux-designer",
+                        "output-aggregator",
+                    }
+                ):
+                    if token not in scenario_roles:
+                        errors.append(
+                            f"{sid}.dependency_notes[{index}] references role '{token}' "
+                            f"not present in scenario role constraints"
+                        )
+    return errors
 
 
 if __name__ == "__main__":

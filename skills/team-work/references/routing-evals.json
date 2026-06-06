@@ -39,7 +39,7 @@
       "complexity": "simple",
       "prompt": "Build one accessible React profile card component from these props.",
       "required_roles": ["frontend-developer"],
-      "optional_roles": ["ui-ux-designer"],
+      "optional_roles": [],
       "forbidden_roles": [
         "product-manager",
         "system-architect",
@@ -67,6 +67,133 @@
       ],
       "dependency_notes": [],
       "expected_process": "Use one operational specialist and answer directly."
+    },
+    {
+      "id": "simple-fullstack-crud",
+      "category": "direct_specialist",
+      "complexity": "simple",
+      "prompt": "Add a small full-stack CRUD page for managing project tags in an existing Next.js app.",
+      "required_roles": ["fullstack-developer"],
+      "optional_roles": [],
+      "forbidden_roles": [
+        "product-manager",
+        "system-architect",
+        "output-aggregator"
+      ],
+      "dependency_notes": [],
+      "expected_process": "Use one full-stack owner for a small end-to-end slice. Do not create a multi-agent workflow."
+    },
+    {
+      "id": "simple-product-scope",
+      "category": "direct_specialist",
+      "complexity": "simple",
+      "prompt": "Clarify the MVP scope for a user notification feature.",
+      "required_roles": ["product-manager"],
+      "optional_roles": [],
+      "forbidden_roles": [
+        "system-architect",
+        "frontend-developer",
+        "backend-developer",
+        "database-engineer",
+        "devops-engineer",
+        "output-aggregator"
+      ],
+      "dependency_notes": [],
+      "expected_process": "Use one product specialist to define scope and acceptance criteria. No multi-agent workflow."
+    },
+    {
+      "id": "simple-architecture-question",
+      "category": "direct_specialist",
+      "complexity": "simple",
+      "prompt": "Should we use a message queue or direct HTTP calls for inter-service communication in this microservice setup?",
+      "required_roles": ["system-architect"],
+      "optional_roles": [],
+      "forbidden_roles": [
+        "product-manager",
+        "frontend-developer",
+        "backend-developer",
+        "database-engineer",
+        "devops-engineer",
+        "output-aggregator"
+      ],
+      "dependency_notes": [],
+      "expected_process": "Use one architecture specialist for a technology choice question. No multi-agent workflow."
+    },
+    {
+      "id": "simple-design-review",
+      "category": "direct_specialist",
+      "complexity": "simple",
+      "prompt": "Review the user flow for this checkout screen and suggest improvements.",
+      "required_roles": ["ui-ux-designer"],
+      "optional_roles": [],
+      "forbidden_roles": [
+        "product-manager",
+        "system-architect",
+        "frontend-developer",
+        "backend-developer",
+        "database-engineer",
+        "devops-engineer",
+        "output-aggregator"
+      ],
+      "dependency_notes": [],
+      "expected_process": "Use one design specialist for UX review and recommendations. No multi-agent workflow."
+    },
+    {
+      "id": "simple-qa-strategy",
+      "category": "direct_specialist",
+      "complexity": "simple",
+      "prompt": "What test strategy should we use for this new payment webhook handler?",
+      "required_roles": ["qa-engineer"],
+      "optional_roles": [],
+      "forbidden_roles": [
+        "product-manager",
+        "system-architect",
+        "frontend-developer",
+        "backend-developer",
+        "database-engineer",
+        "devops-engineer",
+        "output-aggregator"
+      ],
+      "dependency_notes": [],
+      "expected_process": "Use one QA specialist for test strategy guidance. No multi-agent workflow."
+    },
+    {
+      "id": "simple-security-review",
+      "category": "direct_specialist",
+      "complexity": "simple",
+      "prompt": "Review this JWT token implementation for security issues.",
+      "required_roles": ["security-engineer"],
+      "optional_roles": [],
+      "forbidden_roles": [
+        "product-manager",
+        "system-architect",
+        "frontend-developer",
+        "backend-developer",
+        "database-engineer",
+        "devops-engineer",
+        "output-aggregator"
+      ],
+      "dependency_notes": [],
+      "expected_process": "Use one security specialist for a focused review. No multi-agent workflow."
+    },
+    {
+      "id": "simple-mobile-component",
+      "category": "direct_specialist",
+      "complexity": "simple",
+      "prompt": "Build a reusable native bottom sheet component for this React Native app.",
+      "required_roles": ["mobile-developer"],
+      "optional_roles": [],
+      "forbidden_roles": [
+        "product-manager",
+        "system-architect",
+        "frontend-developer",
+        "backend-developer",
+        "database-engineer",
+        "devops-engineer",
+        "output-aggregator"
+      ],
+      "dependency_notes": [],
+      "expected_process": "Use one mobile specialist for a focused component implementation. No multi-agent workflow."
     },
     {
       "id": "medium-login-api-ui",
@@ -117,6 +244,34 @@
         "devops-engineer is optional if deployment orchestration is part of the rollout"
       ],
       "expected_process": "Use a sequenced medium workflow because migration order matters. Do not treat it as a full product or UI project."
+    },
+    {
+      "id": "medium-ci-deployment",
+      "category": "multi_domain_parallel",
+      "complexity": "medium",
+      "prompt": "Set up automated staging deployment with quality gates for a new microservice.",
+      "required_roles": ["devops-engineer", "qa-engineer"],
+      "optional_roles": ["backend-developer", "output-aggregator"],
+      "forbidden_roles": ["frontend-developer", "ui-ux-designer", "mobile-developer", "product-manager"],
+      "dependency_notes": [
+        "qa-engineer is optional only if test automation and coverage gates are part of the deployment pipeline",
+        "backend-developer is optional if application-specific runtime config or health checks are needed"
+      ],
+      "expected_process": "Use a medium workflow focused on infrastructure and operational quality. Avoid unrelated product or UI roles."
+    },
+    {
+      "id": "medium-data-heavy-feature",
+      "category": "multi_domain_parallel",
+      "complexity": "medium",
+      "prompt": "Add an analytics dashboard showing real-time event counts with filtering and export.",
+      "required_roles": ["database-engineer", "backend-developer", "frontend-developer"],
+      "optional_roles": ["qa-engineer", "ui-ux-designer", "output-aggregator"],
+      "forbidden_roles": ["mobile-developer", "devops-engineer", "product-manager"],
+      "dependency_notes": [
+        "database-engineer defines schema, indexes, and query contracts before backend-developer builds aggregation APIs",
+        "backend-developer and frontend-developer may run in parallel after the data contract is explicit"
+      ],
+      "expected_process": "Use a medium workflow with explicit data/API ownership and UI implementation. Avoid unrelated mobile or infrastructure roles."
     },
     {
       "id": "complex-saas-analytics-platform",
